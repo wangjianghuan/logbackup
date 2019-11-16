@@ -11,20 +11,33 @@ import (
 	"runtime"
 )
 
-var endpoint, accessKeyId, accessKeySecret, bucketName  string
+var endpoint, accessKeyId, accessKeySecret, bucketName string
 
 func main() {
 	fmt.Println("OSS Go SDK Version: ", oss.Version)
-
-	// 读取配置信息
-	goRoot := os.Getenv("GOROOT")
-	fmt.Println(goRoot)
-
-	endpoint = os.Getenv("GOROOT")
-	accessKeyId = os.Getenv("GOROOT")
-	accessKeySecret = os.Getenv("GOROOT")
-	bucketName = os.Getenv("GOROOT")
+	// 配置信息检查
+	envCheck()
+	// 文件上传备份
 	backup()
+}
+
+func envCheck() {
+	endpoint = os.Getenv("ENDPOINT")
+	accessKeyId = os.Getenv("ACCESSKEYID")
+	accessKeySecret = os.Getenv("ACCESSKEYSECRET")
+	bucketName = os.Getenv("BUCKETNAME")
+	if endpoint == "" {
+		panic("The ENDPOINT environment variable is not set.")
+	}
+	if accessKeyId == "" {
+		panic("The ACCESSKEYID environment variable is not set.")
+	}
+	if accessKeySecret == "" {
+		panic("The ACCESSKEYSECRET environment variable is not set.")
+	}
+	if bucketName == "" {
+		panic("The BUCKETNAME environment variable is not set.")
+	}
 }
 
 // 日志备份
@@ -88,12 +101,12 @@ func walkDir(dirpath string) {
 		} else {
 			fileName := file.Name()
 			lastTime := time.Now();
-			lastDay := time.Date(lastTime.Year(), lastTime.Month(), lastTime.Day() -1, 0, 0, 0, 0, lastTime.Location()).Format("20060102")
+			lastDay := time.Date(lastTime.Year(), lastTime.Month(), lastTime.Day()-1, 0, 0, 0, 0, lastTime.Location()).Format("20060102")
 			fmt.Println("last:" + lastDay)
 			moveFile := "alarm-" + lastDay
 			fmt.Println("fileName:" + fileName)
 			fmt.Println("moveFile:" + moveFile)
-			if  strings.Index(fileName, moveFile) >= 0 {
+			if strings.Index(fileName, moveFile) >= 0 {
 				// TODO 上传文件
 				//upload(dirpath,fileName)
 				go ReadFile(dirpath + "//" + fileName)
@@ -106,7 +119,6 @@ func walkDir(dirpath string) {
 // 异常输出
 func handleError(err error) {
 	fmt.Println("Error:", err)
-	os.Exit(-1)
 }
 
 // 文件上传 <yourLocalFileName>由本地文件路径加文件名包括后缀组成，例如/users/local/myfile.txt。
@@ -127,7 +139,7 @@ func upload(localFilePath string, localFileName string) {
 		handleError(err)
 	}
 	// 上传文件。
-	err = bucket.PutObjectFromFile(objectName, localFilePath + "//" + localFileName)
+	err = bucket.PutObjectFromFile(objectName, localFilePath+"//"+localFileName)
 	if err != nil {
 		handleError(err)
 	} else {
